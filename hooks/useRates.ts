@@ -18,10 +18,11 @@ export interface RatesResponse extends RatesPayload {
 }
 
 export const useRates = () => {
+  const dailyInterval = 24 * 60 * 60 * 1000;
   const { data, error, isValidating, mutate } = useSWR<RatesResponse>("/api/rates", fetcher, {
-    refreshInterval: 45_000,
-    dedupingInterval: 15_000,
-    revalidateOnFocus: true
+    refreshInterval: dailyInterval,
+    dedupingInterval: dailyInterval,
+    revalidateOnFocus: false
   });
   const [showStale, setShowStale] = useState(false);
 

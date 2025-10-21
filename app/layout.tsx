@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 import type { ReactNode } from "react";
 
@@ -28,8 +29,14 @@ export default function RootLayout({
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-500 md:text-sm">
                 <span className="rounded-full bg-primary/10 px-4 py-2 font-medium text-primary">
-                  نرخ‌ها به‌روزرسانی می‌شوند هر ۴۵ ثانیه
+                  نرخ‌ها هر روز به‌روزرسانی می‌شوند
                 </span>
+                <Link
+                  href="/login"
+                  className="rounded-xl border border-slate-200 px-4 py-2 font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  ورود
+                </Link>
                 <span className="hidden rounded-full bg-emerald-50 px-4 py-2 font-medium text-emerald-600 md:inline-flex">
                   مناسب برای استفاده روی موبایل و دسکتاپ
                 </span>

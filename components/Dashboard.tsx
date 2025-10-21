@@ -148,7 +148,8 @@ export const Dashboard = () => {
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
                       <span className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
                         {holding.amount.toLocaleString("fa-IR", {
-                          maximumFractionDigits: holding.currency === "irt" ? 0 : 2
+                          minimumFractionDigits: holding.currency === "irt" ? 1 : 0,
+                          maximumFractionDigits: holding.currency === "irt" ? 1 : 2
                         })}{" "}
                         {holding.currency.toUpperCase()}
                       </span>

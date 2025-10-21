@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRatesCache, RatesPayload } from "@/lib/rates-cache";
+import { roundTomanValue } from "@/lib/conversion";
 
 const NAVASAN_ITEMS = "usd,eur,usdt";
 const RECOVERABLE_STATUSES = new Set([401, 422, 429, 503]);
@@ -7,7 +8,7 @@ const RECOVERABLE_STATUSES = new Set([401, 422, 429, 503]);
 const toIRTValue = (value: unknown) => {
   const num = typeof value === "number" ? value : Number(String(value ?? "0"));
   if (!Number.isFinite(num) || num <= 0) return 0;
-  return Math.round(num / 10);
+  return roundTomanValue(num / 10);
 };
 
 const buildPayload = (data: any): Omit<RatesPayload, "stale"> => {

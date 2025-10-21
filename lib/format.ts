@@ -4,17 +4,22 @@ const formatDigits = (value: string) =>
   value.replace(/[0-9]/g, (d) => persianDigits[Number(d)] ?? d);
 
 export const formatIRT = (value: number) => {
+  const normalized = Number.isFinite(value) ? Math.round(value * 10) / 10 : 0;
   const formatter = new Intl.NumberFormat("fa-IR", {
-    maximumFractionDigits: 0
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
   });
-  return formatDigits(formatter.format(Math.round(value)));
+  return formatDigits(formatter.format(normalized));
 };
 
 export const formatCurrency = (value: number, currency: string) => {
+  const fractionDigits = currency === "irt" ? 1 : 2;
   const formatter = new Intl.NumberFormat("fa-IR", {
-    maximumFractionDigits: currency === "irt" ? 0 : 2
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits
   });
-  return formatDigits(formatter.format(value));
+  const normalized = Number.isFinite(value) ? value : 0;
+  return formatDigits(formatter.format(normalized));
 };
 
 export const parseNumeric = (value: string) => {

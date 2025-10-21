@@ -18,7 +18,7 @@ interface CacheEntry {
 class RatesCache {
   private latest: CacheEntry | null = null;
   private history: CacheEntry[] = [];
-  private readonly ttl = 45 * 1000;
+  private readonly ttl = 24 * 60 * 60 * 1000;
   private readonly historyLimit = 10;
 
   shouldRequest(now: number) {

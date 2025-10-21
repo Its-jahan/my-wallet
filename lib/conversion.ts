@@ -6,6 +6,11 @@ export interface RatesSnapshot {
   usdtIRT: number;
 }
 
+const roundToToman = (value: number) => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(value * 10) / 10;
+};
+
 const currencyToKey: Record<Exclude<CurrencyCode, "irt">, keyof RatesSnapshot> = {
   usd: "usdIRT",
   eur: "eurIRT",
@@ -18,12 +23,12 @@ export const toIRT = (
   rates?: RatesSnapshot | null
 ) => {
   if (!Number.isFinite(amount) || amount < 0) return 0;
-  if (currency === "irt") return Math.round(amount);
+  if (currency === "irt") return roundToToman(amount);
   if (!rates) return 0;
   const key = currencyToKey[currency];
   const rate = rates[key];
   if (!Number.isFinite(rate) || rate <= 0) return 0;
-  return Math.round(amount * rate);
+  return roundToToman(amount * rate);
 };
 
 export const convertToCurrency = (
@@ -37,3 +42,5 @@ export const convertToCurrency = (
   if (!Number.isFinite(rate) || rate <= 0) return 0;
   return irtAmount / rate;
 };
+
+export const roundTomanValue = roundToToman;
