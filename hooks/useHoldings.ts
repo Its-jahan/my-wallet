@@ -45,7 +45,7 @@ const persistHoldings = (holdings: HoldingRecord[]) => {
 
 const syncHoldingsToSupabase = async (holdings: HoldingRecord[]) => {
   const client = getSupabaseClient();
-  if (!client) return;
+  if (!client) return false;
   try {
     await client.from("wallet_holdings").upsert(
       holdings.map((holding) => ({
@@ -58,8 +58,10 @@ const syncHoldingsToSupabase = async (holdings: HoldingRecord[]) => {
       })),
       { onConflict: "id" }
     );
+    return true;
   } catch (error) {
     console.warn("Failed to sync holdings", error);
+    return false;
   }
 };
 
@@ -134,6 +136,10 @@ export const useHoldings = ({ rates }: UseHoldingsOptions) => {
     return JSON.stringify({ version: 1, holdings }, null, 2);
   }, [holdings]);
 
+  const syncToSupabase = useCallback(() => {
+    return syncHoldingsToSupabase(holdings);
+  }, [holdings]);
+
   const totals = useMemo(() => {
     const summary = holdings.reduce(
       (acc, item) => {
@@ -154,6 +160,7 @@ export const useHoldings = ({ rates }: UseHoldingsOptions) => {
     lastRemoved,
     totals,
     importHoldings,
-    exportHoldings
+    exportHoldings,
+    syncToSupabase
   };
 };

@@ -27,18 +27,18 @@ export const SummaryCards = ({ holdingsIRT, expensesIRT, rates }: SummaryCardsPr
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       <Card
-        title="ارزش کل دارایی‌ها (ریال)"
-        value={`${formatIRT(holdingsIRT)} ریال`}
+        title="ارزش کل دارایی‌ها (تومان)"
+        value={`${formatIRT(holdingsIRT)} تومان`}
         subtitle="بر اساس آخرین نرخ‌های دریافت شده"
       />
       <Card
         title="هزینه‌های ثبت‌شده"
-        value={`${formatIRT(expensesIRT)} ریال`}
-        subtitle="جمع کل مخارج محاسبه‌شده به ریال"
+        value={`${formatIRT(expensesIRT)} تومان`}
+        subtitle="جمع کل مخارج محاسبه‌شده به تومان"
       />
       <div className="card flex flex-col gap-3 p-6">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{netLabel}</span>
-        <div className={`text-2xl font-bold md:text-3xl ${netColor}`}>{formatIRT(Math.abs(balance))} ریال</div>
+        <div className={`text-2xl font-bold md:text-3xl ${netColor}`}>{formatIRT(Math.abs(balance))} تومان</div>
         <p className="text-sm text-slate-500">ارزش خالص با در نظر گرفتن هزینه‌ها</p>
       </div>
       <div className="card flex flex-col gap-3 p-6">

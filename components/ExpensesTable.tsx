@@ -36,7 +36,7 @@ export const ExpensesTable = ({ expenses, onRemove, onUndo, lastRemoved }: Expen
               <th className="px-6 py-3 font-medium">شرح</th>
               <th className="px-6 py-3 font-medium">تاریخ</th>
               <th className="px-6 py-3 font-medium">مقدار ارزی</th>
-              <th className="px-6 py-3 font-medium">معادل ریال</th>
+              <th className="px-6 py-3 font-medium">معادل تومان</th>
               <th className="px-6 py-3" />
             </tr>
           </thead>
@@ -58,7 +58,7 @@ export const ExpensesTable = ({ expenses, onRemove, onUndo, lastRemoved }: Expen
                     })}{" "}
                     {expense.currency.toUpperCase()}
                   </td>
-                  <td className="px-6 py-3 font-semibold text-slate-800">{formatIRT(expense.irtValue)} ریال</td>
+                  <td className="px-6 py-3 font-semibold text-slate-800">{formatIRT(expense.irtValue)} تومان</td>
                   <td className="px-6 py-3 text-left">
                     <button
                       type="button"

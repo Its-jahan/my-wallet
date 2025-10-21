@@ -46,7 +46,7 @@ const persistExpenses = (expenses: ExpenseRecord[]) => {
 
 const syncExpensesToSupabase = async (expenses: ExpenseRecord[]) => {
   const client = getSupabaseClient();
-  if (!client) return;
+  if (!client) return false;
   try {
     await client.from("wallet_expenses").upsert(
       expenses.map((expense) => ({
@@ -60,8 +60,10 @@ const syncExpensesToSupabase = async (expenses: ExpenseRecord[]) => {
       })),
       { onConflict: "id" }
     );
+    return true;
   } catch (error) {
     console.warn("Failed to sync expenses", error);
+    return false;
   }
 };
 
@@ -137,6 +139,10 @@ export const useExpenses = ({ rates }: UseExpensesOptions) => {
     return JSON.stringify({ version: 1, expenses }, null, 2);
   }, [expenses]);
 
+  const syncToSupabase = useCallback(() => {
+    return syncExpensesToSupabase(expenses);
+  }, [expenses]);
+
   const totals = useMemo(() => {
     return expenses.reduce(
       (acc, item) => {
@@ -156,6 +162,7 @@ export const useExpenses = ({ rates }: UseExpensesOptions) => {
     lastRemoved,
     totals,
     importExpenses,
-    exportExpenses
+    exportExpenses,
+    syncToSupabase
   };
 };

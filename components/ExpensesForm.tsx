@@ -106,10 +106,10 @@ export const ExpensesForm = ({ rates, onSubmit, onImport, onExport }: ExpensesFo
       </div>
       <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
         <span>معادل تومانی:</span>
-        <div className="text-lg font-bold text-slate-900">{formatIRT(irtValue)} ریال</div>
+        <div className="text-lg font-bold text-slate-900">{formatIRT(irtValue)} تومان</div>
         {currency !== "irt" && rates && (
           <span className="text-xs text-slate-500">
-            هر {currencyOptions.find((c) => c.value === currency)?.label} ≈ {formatIRT(rates[rateKey[currency as Exclude<CurrencyCode, "irt">]])} ریال
+            هر {currencyOptions.find((c) => c.value === currency)?.label} ≈ {formatIRT(rates[rateKey[currency as Exclude<CurrencyCode, "irt">]])} تومان
           </span>
         )}
       </div>

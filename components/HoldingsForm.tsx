@@ -106,10 +106,10 @@ export const HoldingsForm = ({ rates, onSubmit, onImport, onExport }: HoldingsFo
         </div>
         <div className="flex flex-col justify-end rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
           <span>ارزش معادل:</span>
-          <span className="text-lg font-bold text-slate-900">{formatIRT(irtValue)} ریال</span>
+          <span className="text-lg font-bold text-slate-900">{formatIRT(irtValue)} تومان</span>
           {currency !== "irt" && rates && (
             <span className="text-xs text-slate-500">
-              هر {currencyOptions.find((c) => c.value === currency)?.label} ≈ {formatIRT(rates[rateKey[currency as Exclude<CurrencyCode, "irt">]])} ریال
+              هر {currencyOptions.find((c) => c.value === currency)?.label} ≈ {formatIRT(rates[rateKey[currency as Exclude<CurrencyCode, "irt">]])} تومان
             </span>
           )}
         </div>

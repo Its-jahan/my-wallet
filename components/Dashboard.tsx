@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HoldingsForm } from "./HoldingsForm";
 import { ExpensesForm } from "./ExpensesForm";
 import { ExpensesTable } from "./ExpensesTable";
@@ -30,6 +30,34 @@ export const Dashboard = () => {
 
   const holdingsTotal = holdings.totals.irt;
   const expensesTotal = expenses.totals.irt;
+  const [syncStatus, setSyncStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleManualSync = async () => {
+    if (syncStatus === "loading") return;
+    setSyncStatus("loading");
+    try {
+      const [holdingsSynced, expensesSynced] = await Promise.all([
+        holdings.syncToSupabase(),
+        expenses.syncToSupabase()
+      ]);
+      if (holdingsSynced && expensesSynced) {
+        setSyncStatus("success");
+      } else {
+        setSyncStatus("error");
+      }
+    } catch (err) {
+      console.error("Manual sync failed", err);
+      setSyncStatus("error");
+    }
+  };
+
+  useEffect(() => {
+    if (syncStatus === "success" || syncStatus === "error") {
+      const timer = setTimeout(() => setSyncStatus("idle"), 4000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [syncStatus]);
 
   return (
     <div className="space-y-8">
@@ -41,6 +69,23 @@ export const Dashboard = () => {
       />
 
       <SummaryCards holdingsIRT={holdingsTotal} expensesIRT={expensesTotal} rates={rates ?? null} />
+
+      <div className="card flex flex-col gap-3 p-6 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800">همگام‌سازی با Supabase</h3>
+          <p className="text-xs text-slate-500">داده‌های فعلی دارایی‌ها و هزینه‌ها را در پایگاه داده ذخیره کنید.</p>
+          {syncStatus === "success" && <p className="text-xs text-emerald-600">ذخیره‌سازی با موفقیت انجام شد.</p>}
+          {syncStatus === "error" && <p className="text-xs text-rose-600">ذخیره‌سازی با خطا مواجه شد. لطفا دوباره تلاش کنید.</p>}
+        </div>
+        <button
+          type="button"
+          onClick={handleManualSync}
+          disabled={syncStatus === "loading"}
+          className="btn-primary disabled:opacity-60"
+        >
+          {syncStatus === "loading" ? "در حال ذخیره..." : "ذخیره همه داده‌ها"}
+        </button>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <HoldingsForm
@@ -107,7 +152,7 @@ export const Dashboard = () => {
                         })}{" "}
                         {holding.currency.toUpperCase()}
                       </span>
-                      <span className="font-semibold text-slate-800">{formatIRT(holding.irtValue)} ریال</span>
+                      <span className="font-semibold text-slate-800">{formatIRT(holding.irtValue)} تومان</span>
                     </div>
                   </li>
                 ))}
