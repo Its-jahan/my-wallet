@@ -15,23 +15,20 @@ import type { RatesSnapshot } from "@/lib/conversion";
 import { formatIRT } from "@/lib/format";
 import { formatJalali } from "@/lib/dayjs";
 
-export const Dashboard = () => {
-  const router = useRouter();
-  const { user, loading: sessionLoading } = useSupabaseSession();
-  const { rates, isLoading, error, mutate, showStale, clearStale } = useRates();
+type UseRatesReturn = ReturnType<typeof useRates>;
 
-  const ratesSnapshot: RatesSnapshot | null = useMemo(() => {
-    if (!rates) return null;
-    return {
-      usdIRT: rates.usdIRT,
-      eurIRT: rates.eurIRT,
-      usdtIRT: rates.usdtIRT
-    };
-  }, [rates]);
-
-  const holdings = useHoldings({ rates: ratesSnapshot, userId: user?.id ?? null });
-  const expenses = useExpenses({ rates: ratesSnapshot, userId: user?.id ?? null });
-
+const DashboardContent = ({
+  userId,
+  ratesSnapshot,
+  ratesState
+}: {
+  userId: string;
+  ratesSnapshot: RatesSnapshot | null;
+  ratesState: UseRatesReturn;
+}) => {
+  const { rates, isLoading, error, mutate, showStale, clearStale } = ratesState;
+  const holdings = useHoldings({ rates: ratesSnapshot, userId });
+  const expenses = useExpenses({ rates: ratesSnapshot, userId });
   const holdingsTotal = holdings.totals.irt;
   const expensesTotal = expenses.totals.irt;
   const [syncStatus, setSyncStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -44,20 +41,11 @@ export const Dashboard = () => {
     return undefined;
   }, [syncStatus]);
 
-  useEffect(() => {
-    if (!sessionLoading && !user) {
-      router.replace("/login");
-    }
-  }, [router, sessionLoading, user]);
-
   const handleManualSync = async () => {
     if (syncStatus === "loading") return;
     setSyncStatus("loading");
     try {
-      const [holdingsSynced, expensesSynced] = await Promise.all([
-        holdings.syncToSupabase(),
-        expenses.syncToSupabase()
-      ]);
+      const [holdingsSynced, expensesSynced] = await Promise.all([holdings.syncToSupabase(), expenses.syncToSupabase()]);
       if (holdingsSynced && expensesSynced) {
         setSyncStatus("success");
       } else {
@@ -68,14 +56,6 @@ export const Dashboard = () => {
       setSyncStatus("error");
     }
   };
-
-  if (sessionLoading || !user) {
-    return (
-      <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/80 text-sm text-slate-500">
-        {sessionLoading ? "در حال بررسی حساب کاربری..." : "برای مشاهده داشبورد ابتدا وارد شوید."}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
@@ -194,4 +174,44 @@ export const Dashboard = () => {
       )}
     </div>
   );
+};
+
+export const Dashboard = () => {
+  const router = useRouter();
+  const { user, loading: sessionLoading } = useSupabaseSession();
+  const ratesState = useRates();
+  const { rates } = ratesState;
+
+  useEffect(() => {
+    if (!sessionLoading && !user) {
+      router.replace("/login");
+    }
+  }, [router, sessionLoading, user]);
+
+  const ratesSnapshot: RatesSnapshot | null = useMemo(() => {
+    if (!rates) return null;
+    return {
+      usdIRT: rates.usdIRT,
+      eurIRT: rates.eurIRT,
+      usdtIRT: rates.usdtIRT
+    };
+  }, [rates]);
+
+  if (sessionLoading) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/80 text-sm text-slate-500">
+        در حال بررسی حساب کاربری...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/80 text-sm text-slate-500">
+        برای مشاهده داشبورد ابتدا وارد شوید.
+      </div>
+    );
+  }
+
+  return <DashboardContent userId={user.id} ratesSnapshot={ratesSnapshot} ratesState={ratesState} />;
 };
