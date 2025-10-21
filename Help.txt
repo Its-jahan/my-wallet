@@ -1,0 +1,52 @@
+My Wallet – Quick Help
+======================
+
+Run the App
+-----------
+- Install dependencies once: `pnpm install`
+- Start the dev server: `pnpm dev`
+  Open http://localhost:3000 and sign up / log in.
+
+Lint & Format
+-------------
+- First run `pnpm lint`. Next.js will prompt you to pick an ESLint preset—choose “Strict (recommended)” once, and it will stop prompting.
+- If you need to format files manually, run `pnpm dlx prettier --write .`
+
+Environment Variables
+---------------------
+- Everything uses `env.local.` (or `.env`) with:
+  - `NAVASAN_API_KEY=<your-key>`
+  - `NEXT_PUBLIC_SUPABASE_URL=<project-url>`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>`
+- After changing env values, restart `pnpm dev`.
+
+Supabase Sync
+-------------
+- Holdings sync sums each currency per user and upserts using `(user_id,currency)`.
+- Expenses sync writes rows by `id` (or inserts new ones) with ISO timestamps in `expense_at`.
+- Both rely on Supabase Auth, so ensure `wallet_holdings` and `wallet_expenses` tables have the correct UUID `user_id` column and uniqueness constraints.
+- To trigger a manual sync from the UI, use the “ذخیره همه داده‌ها” button on the dashboard.
+
+Rates & Currency
+----------------
+- NAVASAN rates poll once per day (`/api/rates`). Trigger refresh with the banner button.
+- All currency codes must be uppercase: `IRT`, `USD`, `USDT`, `EUR`. The app normalizes them before Supabase writes.
+- Toman values display with one decimal; Rial→Toman scaling is baked into `lib/conversion.ts`.
+
+PWA Notes
+---------
+- Manifest is served at `/manifest.webmanifest`. Icons are in `public/icons`.
+- Service worker lives at `public/sw.js`; it registers automatically in the browser.
+- If you update icons or SW, `pnpm dev` needs a restart for browsers to pick up fresh assets.
+
+Troubleshooting
+---------------
+- “Minified React error #310”: means hooks executed conditionally. Ensure hooks live at the top level (already fixed by splitting `Dashboard` into `DashboardContent`).
+- Supabase `22P02` (invalid input syntax): double-check that `user_id` is UUID, currency enum is uppercase, and timestamps are valid ISO strings.
+- If builds fail complaining about `@types/react`, install locally with `pnpm add -D @types/react`.
+
+Deployment Tips
+---------------
+- Vercel build command: `pnpm build`
+- Set the same env vars in Vercel dashboard (`NAVASAN_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+- Telemetry is on by default; disable with `NEXT_TELEMETRY_DISABLED=1` if desired.

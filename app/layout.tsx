@@ -27,6 +27,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fa" dir="rtl">
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body className="min-h-screen bg-slate-100 text-slate-900 antialiased">
         <div className="relative min-h-screen overflow-hidden">
           <div className="pointer-events-none absolute inset-x-0 -top-32 h-72 bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.18),_transparent_65%)]" />

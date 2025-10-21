@@ -67,17 +67,19 @@ const syncExpensesToSupabase = async (expenses: ExpenseRecord[], userId?: string
           user_id: userId,
           currency: toCurrencyCode(expense.currency),
           amount: expense.amount,
-          expense_at: expenseAt
+          expense_at: expenseAt,
+          description: expense.description,
+          irt_value: expense.irtValue.toString(),
+          created_at: expense.createdAt
         };
       })
       .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
+    await client.from("wallet_expenses").delete().eq("user_id", userId);
+
     if (payload.length === 0) return true;
 
-    const { error } = await client
-      .from("wallet_expenses")
-      .upsert(payload, { onConflict: "user_id,expense_at", ignoreDuplicates: false })
-      .select("user_id,currency,amount,expense_at");
+    const { error } = await client.from("wallet_expenses").insert(payload).select("user_id,currency,amount,expense_at");
 
     if (error) {
       console.warn("Failed to sync expenses", error);

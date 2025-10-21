@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toIRT, type CurrencyCode, type RatesSnapshot } from "@/lib/conversion";
 import { getSupabaseClient } from "@/lib/supabase-client";
-import { toCurrencyCode, type DatabaseCurrencyCode } from "@/lib/currency";
+import { toCurrencyCode } from "@/lib/currency";
 
 export interface HoldingRecord {
   id: string;
@@ -50,24 +50,20 @@ const syncHoldingsToSupabase = async (holdings: HoldingRecord[], userId?: string
   if (!client) return false;
 
   try {
-    const aggregated = holdings.reduce<Partial<Record<DatabaseCurrencyCode, number>>>((acc, holding) => {
-      const currency = toCurrencyCode(holding.currency);
-      acc[currency] = (acc[currency] ?? 0) + holding.amount;
-      return acc;
-    }, {});
-
-    const payload = (Object.entries(aggregated) as Array<[DatabaseCurrencyCode, number]>).map(([currency, amount]) => ({
-      user_id: userId,
-      currency,
-      amount
+    const payload = holdings.map((holding) => ({
+      title: holding.title,
+      currency: toCurrencyCode(holding.currency),
+      amount: holding.amount,
+      irt_value: holding.irtValue.toString(),
+      created_at: holding.createdAt,
+      user_id: userId
     }));
+
+    await client.from("wallet_holdings").delete().eq("user_id", userId);
 
     if (payload.length === 0) return true;
 
-    const { error } = await client
-      .from("wallet_holdings")
-      .upsert(payload, { onConflict: "user_id,currency" })
-      .select("user_id,currency,amount,updated_at");
+    const { error } = await client.from("wallet_holdings").insert(payload).select("user_id,currency,amount");
 
     if (error) {
       console.warn("Failed to sync holdings", error);
