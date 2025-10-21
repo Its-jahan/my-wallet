@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRatesCache, RatesPayload } from "@/lib/rates-cache";
 
-const NAVASAN_ENDPOINT = "http://api.navasan.tech/latest/?item=usd,eur,usdt";
+const NAVASAN_ITEMS = "usd,eur,usdt";
 const RECOVERABLE_STATUSES = new Set([401, 422, 429, 503]);
 
 const toIRTValue = (value: unknown) => {
@@ -43,10 +43,11 @@ export async function GET() {
   }
 
   try {
-    const response = await fetch(NAVASAN_ENDPOINT, {
-      headers: {
-        "X-API-KEY": apiKey
-      },
+    const endpoint = new URL("https://api.navasan.tech/latest/");
+    endpoint.searchParams.set("item", NAVASAN_ITEMS);
+    endpoint.searchParams.set("api_key", apiKey);
+
+    const response = await fetch(endpoint, {
       next: { revalidate: 0 },
       cache: "no-store"
     });
