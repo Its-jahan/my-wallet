@@ -46,18 +46,37 @@ const persistHoldings = (holdings: HoldingRecord[]) => {
 const syncHoldingsToSupabase = async (holdings: HoldingRecord[]) => {
   const client = getSupabaseClient();
   if (!client) return false;
+
+  const basePayload = holdings.map((holding) => ({
+    id: holding.id,
+    title: holding.title,
+    currency: holding.currency,
+    amount: holding.amount,
+    irt_value: holding.irtValue,
+    created_at: holding.createdAt
+  }));
+
+  const fallbackPayload = basePayload.map(({ created_at, ...rest }) => rest);
+
+  const upsert = async (payload: any[]) => {
+    const { error } = await client.from("wallet_holdings").upsert(payload, { onConflict: "id" });
+    return error;
+  };
+
   try {
-    await client.from("wallet_holdings").upsert(
-      holdings.map((holding) => ({
-        id: holding.id,
-        title: holding.title,
-        currency: holding.currency,
-        amount: holding.amount,
-        irt_value: holding.irtValue,
-        created_at: holding.createdAt
-      })),
-      { onConflict: "id" }
-    );
+    const error = await upsert(basePayload);
+    if (error) {
+      if (error.code === "PGRST204") {
+        const fallbackError = await upsert(fallbackPayload);
+        if (fallbackError) {
+          console.warn("Failed to sync holdings (fallback)", fallbackError);
+          return false;
+        }
+        return true;
+      }
+      console.warn("Failed to sync holdings", error);
+      return false;
+    }
     return true;
   } catch (error) {
     console.warn("Failed to sync holdings", error);

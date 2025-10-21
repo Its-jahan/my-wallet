@@ -47,19 +47,38 @@ const persistExpenses = (expenses: ExpenseRecord[]) => {
 const syncExpensesToSupabase = async (expenses: ExpenseRecord[]) => {
   const client = getSupabaseClient();
   if (!client) return false;
+
+  const basePayload = expenses.map((expense) => ({
+    id: expense.id,
+    description: expense.description,
+    currency: expense.currency,
+    amount: expense.amount,
+    irt_value: expense.irtValue,
+    spent_at: expense.spentAt,
+    created_at: expense.createdAt
+  }));
+
+  const fallbackPayload = basePayload.map(({ spent_at, created_at, ...rest }) => rest);
+
+  const upsert = async (payload: any[]) => {
+    const { error } = await client.from("wallet_expenses").upsert(payload, { onConflict: "id" });
+    return error;
+  };
+
   try {
-    await client.from("wallet_expenses").upsert(
-      expenses.map((expense) => ({
-        id: expense.id,
-        description: expense.description,
-        currency: expense.currency,
-        amount: expense.amount,
-        irt_value: expense.irtValue,
-        spent_at: expense.spentAt,
-        created_at: expense.createdAt
-      })),
-      { onConflict: "id" }
-    );
+    const error = await upsert(basePayload);
+    if (error) {
+      if (error.code === "PGRST204") {
+        const fallbackError = await upsert(fallbackPayload);
+        if (fallbackError) {
+          console.warn("Failed to sync expenses (fallback)", fallbackError);
+          return false;
+        }
+        return true;
+      }
+      console.warn("Failed to sync expenses", error);
+      return false;
+    }
     return true;
   } catch (error) {
     console.warn("Failed to sync expenses", error);
