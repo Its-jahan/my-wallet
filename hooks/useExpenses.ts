@@ -61,11 +61,11 @@ const syncExpensesToSupabase = async (expenses: ExpenseRecord[]) => {
       currency: toCurrencyCode(expense.currency),
       amount: expense.amount,
       irt_value: expense.irtValue,
-      spent_at: expense.spentAt,
+      expense_at: expense.spentAt,
       created_at: expense.createdAt
     }));
 
-    const fallbackPayload = basePayload.map(({ spent_at, created_at, ...rest }) => rest);
+    const fallbackPayload = basePayload.map(({ expense_at, created_at, ...rest }) => rest);
 
     const error = await upsert(basePayload);
     if (error) {

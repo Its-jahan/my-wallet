@@ -33,7 +33,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=public-anon-key
 1. یک پروژه Supabase ایجاد کنید.
 2. دو جدول با ساختار مشابه زیر بسازید:
    - `wallet_holdings`: ستون‌های `id`, `title`, `currency`, `amount`, `irt_value`, `created_at`
-   - `wallet_expenses`: ستون‌های `id`, `description`, `currency`, `amount`, `irt_value`, `spent_at`, `created_at`
+   - `wallet_expenses`: ستون‌های `id`, `description`, `currency`, `amount`, `irt_value`, `expense_at`, `created_at`
 3. قوانین RLS را متناسب با نیاز خود تنظیم کنید (برای تست می‌توانید آن‌ها را غیرفعال کنید).
 4. مقادیر `NEXT_PUBLIC_SUPABASE_URL` و `NEXT_PUBLIC_SUPABASE_ANON_KEY` را در `.env.local` قرار دهید.
 
