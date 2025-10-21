@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toIRT, type CurrencyCode, type RatesSnapshot } from "@/lib/conversion";
 import { getSupabaseClient } from "@/lib/supabase-client";
+import { toCurrencyCode } from "@/lib/currency";
 
 export interface ExpenseRecord {
   id: string;
@@ -48,24 +49,24 @@ const syncExpensesToSupabase = async (expenses: ExpenseRecord[]) => {
   const client = getSupabaseClient();
   if (!client) return false;
 
-  const basePayload = expenses.map((expense) => ({
-    id: expense.id,
-    description: expense.description,
-    currency: expense.currency,
-    amount: expense.amount,
-    irt_value: expense.irtValue,
-    spent_at: expense.spentAt,
-    created_at: expense.createdAt
-  }));
-
-  const fallbackPayload = basePayload.map(({ spent_at, created_at, ...rest }) => rest);
-
   const upsert = async (payload: any[]) => {
     const { error } = await client.from("wallet_expenses").upsert(payload, { onConflict: "id" });
     return error;
   };
 
   try {
+    const basePayload = expenses.map((expense) => ({
+      id: expense.id,
+      description: expense.description,
+      currency: toCurrencyCode(expense.currency),
+      amount: expense.amount,
+      irt_value: expense.irtValue,
+      spent_at: expense.spentAt,
+      created_at: expense.createdAt
+    }));
+
+    const fallbackPayload = basePayload.map(({ spent_at, created_at, ...rest }) => rest);
+
     const error = await upsert(basePayload);
     if (error) {
       if (error.code === "PGRST204") {

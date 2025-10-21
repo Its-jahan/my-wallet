@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toIRT, type CurrencyCode, type RatesSnapshot } from "@/lib/conversion";
 import { getSupabaseClient } from "@/lib/supabase-client";
+import { toCurrencyCode } from "@/lib/currency";
 
 export interface HoldingRecord {
   id: string;
@@ -47,23 +48,23 @@ const syncHoldingsToSupabase = async (holdings: HoldingRecord[]) => {
   const client = getSupabaseClient();
   if (!client) return false;
 
-  const basePayload = holdings.map((holding) => ({
-    id: holding.id,
-    title: holding.title,
-    currency: holding.currency,
-    amount: holding.amount,
-    irt_value: holding.irtValue,
-    created_at: holding.createdAt
-  }));
-
-  const fallbackPayload = basePayload.map(({ created_at, ...rest }) => rest);
-
   const upsert = async (payload: any[]) => {
     const { error } = await client.from("wallet_holdings").upsert(payload, { onConflict: "id" });
     return error;
   };
 
   try {
+    const basePayload = holdings.map((holding) => ({
+      id: holding.id,
+      title: holding.title,
+      currency: toCurrencyCode(holding.currency),
+      amount: holding.amount,
+      irt_value: holding.irtValue,
+      created_at: holding.createdAt
+    }));
+
+    const fallbackPayload = basePayload.map(({ created_at, ...rest }) => rest);
+
     const error = await upsert(basePayload);
     if (error) {
       if (error.code === "PGRST204") {
