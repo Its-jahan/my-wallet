@@ -37,18 +37,18 @@ export const Dashboard = () => {
   const [syncStatus, setSyncStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   useEffect(() => {
+    if (syncStatus === "success" || syncStatus === "error") {
+      const timer = setTimeout(() => setSyncStatus("idle"), 4000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [syncStatus]);
+
+  useEffect(() => {
     if (!sessionLoading && !user) {
       router.replace("/login");
     }
   }, [router, sessionLoading, user]);
-
-  if (sessionLoading || !user) {
-    return (
-      <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/80 text-sm text-slate-500">
-        {sessionLoading ? "در حال بررسی حساب کاربری..." : "برای مشاهده داشبورد ابتدا وارد شوید."}
-      </div>
-    );
-  }
 
   const handleManualSync = async () => {
     if (syncStatus === "loading") return;
@@ -69,13 +69,13 @@ export const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (syncStatus === "success" || syncStatus === "error") {
-      const timer = setTimeout(() => setSyncStatus("idle"), 4000);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [syncStatus]);
+  if (sessionLoading || !user) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/80 text-sm text-slate-500">
+        {sessionLoading ? "در حال بررسی حساب کاربری..." : "برای مشاهده داشبورد ابتدا وارد شوید."}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -166,8 +166,8 @@ export const Dashboard = () => {
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
                       <span className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
                         {holding.amount.toLocaleString("fa-IR", {
-                          minimumFractionDigits: holding.currency === "IRT" ? 1 : 0,
-                          maximumFractionDigits: holding.currency === "IRT" ? 1 : 2
+                          minimumFractionDigits: holding.currency === "irt" ? 1 : 0,
+                          maximumFractionDigits: holding.currency === "irt" ? 1 : 2
                         })}{" "}
                         {holding.currency.toUpperCase()}
                       </span>
