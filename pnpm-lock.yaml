@@ -51,6 +51,9 @@ importers:
       '@types/react-dom':
         specifier: '18'
         version: 18.3.7(@types/react@18.3.26)
+      '@types/react':
+        specifier: file:types/react
+        version: file:types/react
       eslint:
         specifier: 8.57.1
         version: 8.57.1
@@ -62,6 +65,10 @@ importers:
         version: 5.9.3
 
 packages:
+
+  '@types/react@file:types/react':
+    resolution: {directory: types/react, type: directory}
+    dev: true
 
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
