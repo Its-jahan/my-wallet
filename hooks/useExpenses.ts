@@ -45,38 +45,41 @@ const persistExpenses = (expenses: ExpenseRecord[]) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
 };
 
-const syncExpensesToSupabase = async (expenses: ExpenseRecord[]) => {
+const toExpenseTimestamp = (value: string) => {
+  if (!value) return null;
+  const isoLike = value.includes("T") ? value : `${value}T00:00:00`;
+  const date = new Date(isoLike);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
+
+const syncExpensesToSupabase = async (expenses: ExpenseRecord[], userId?: string | null) => {
+  if (!userId) return false;
   const client = getSupabaseClient();
   if (!client) return false;
 
-  const upsert = async (payload: any[]) => {
-    const { error } = await client.from("wallet_expenses").upsert(payload, { onConflict: "id" });
-    return error;
-  };
-
   try {
-    const basePayload = expenses.map((expense) => ({
-      id: expense.id,
-      description: expense.description,
-      currency: toCurrencyCode(expense.currency),
-      amount: expense.amount,
-      irt_value: expense.irtValue,
-      expense_at: expense.spentAt,
-      created_at: expense.createdAt
-    }));
+    const payload = expenses
+      .map((expense) => {
+        const expenseAt = toExpenseTimestamp(expense.spentAt);
+        if (!expenseAt) return null;
+        return {
+          user_id: userId,
+          currency: toCurrencyCode(expense.currency),
+          amount: expense.amount,
+          expense_at: expenseAt
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
-    const fallbackPayload = basePayload.map(({ expense_at, created_at, ...rest }) => rest);
+    if (payload.length === 0) return true;
 
-    const error = await upsert(basePayload);
+    const { error } = await client
+      .from("wallet_expenses")
+      .upsert(payload, { onConflict: "user_id,expense_at", ignoreDuplicates: false })
+      .select("user_id,currency,amount,expense_at");
+
     if (error) {
-      if (error.code === "PGRST204") {
-        const fallbackError = await upsert(fallbackPayload);
-        if (fallbackError) {
-          console.warn("Failed to sync expenses (fallback)", fallbackError);
-          return false;
-        }
-        return true;
-      }
       console.warn("Failed to sync expenses", error);
       return false;
     }
@@ -89,9 +92,10 @@ const syncExpensesToSupabase = async (expenses: ExpenseRecord[]) => {
 
 export interface UseExpensesOptions {
   rates?: RatesSnapshot | null;
+  userId?: string | null;
 }
 
-export const useExpenses = ({ rates }: UseExpensesOptions) => {
+export const useExpenses = ({ rates, userId }: UseExpensesOptions) => {
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [lastRemoved, setLastRemoved] = useState<ExpenseRecord | null>(null);
   const initialised = useRef(false);
@@ -106,8 +110,8 @@ export const useExpenses = ({ rates }: UseExpensesOptions) => {
   useEffect(() => {
     if (!initialised.current) return;
     persistExpenses(expenses);
-    void syncExpensesToSupabase(expenses);
-  }, [expenses]);
+    void syncExpensesToSupabase(expenses, userId);
+  }, [expenses, userId]);
 
   const addExpense = useCallback(
     (input: { description: string; amount: number; currency: CurrencyCode; spentAt: string }) => {
@@ -160,8 +164,8 @@ export const useExpenses = ({ rates }: UseExpensesOptions) => {
   }, [expenses]);
 
   const syncToSupabase = useCallback(() => {
-    return syncExpensesToSupabase(expenses);
-  }, [expenses]);
+    return syncExpensesToSupabase(expenses, userId);
+  }, [expenses, userId]);
 
   const totals = useMemo(() => {
     return expenses.reduce(

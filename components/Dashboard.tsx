@@ -29,8 +29,8 @@ export const Dashboard = () => {
     };
   }, [rates]);
 
-  const holdings = useHoldings({ rates: ratesSnapshot });
-  const expenses = useExpenses({ rates: ratesSnapshot });
+  const holdings = useHoldings({ rates: ratesSnapshot, userId: user?.id ?? null });
+  const expenses = useExpenses({ rates: ratesSnapshot, userId: user?.id ?? null });
 
   const holdingsTotal = holdings.totals.irt;
   const expensesTotal = expenses.totals.irt;

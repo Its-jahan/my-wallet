@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toIRT, type CurrencyCode, type RatesSnapshot } from "@/lib/conversion";
 import { getSupabaseClient } from "@/lib/supabase-client";
-import { toCurrencyCode } from "@/lib/currency";
+import { toCurrencyCode, type DatabaseCurrencyCode } from "@/lib/currency";
 
 export interface HoldingRecord {
   id: string;
@@ -44,37 +44,32 @@ const persistHoldings = (holdings: HoldingRecord[]) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(holdings));
 };
 
-const syncHoldingsToSupabase = async (holdings: HoldingRecord[]) => {
+const syncHoldingsToSupabase = async (holdings: HoldingRecord[], userId?: string | null) => {
+  if (!userId) return false;
   const client = getSupabaseClient();
   if (!client) return false;
 
-  const upsert = async (payload: any[]) => {
-    const { error } = await client.from("wallet_holdings").upsert(payload, { onConflict: "id" });
-    return error;
-  };
-
   try {
-    const basePayload = holdings.map((holding) => ({
-      id: holding.id,
-      title: holding.title,
-      currency: toCurrencyCode(holding.currency),
-      amount: holding.amount,
-      irt_value: holding.irtValue,
-      created_at: holding.createdAt
+    const aggregated = holdings.reduce<Partial<Record<DatabaseCurrencyCode, number>>>((acc, holding) => {
+      const currency = toCurrencyCode(holding.currency);
+      acc[currency] = (acc[currency] ?? 0) + holding.amount;
+      return acc;
+    }, {});
+
+    const payload = (Object.entries(aggregated) as Array<[DatabaseCurrencyCode, number]>).map(([currency, amount]) => ({
+      user_id: userId,
+      currency,
+      amount
     }));
 
-    const fallbackPayload = basePayload.map(({ created_at, ...rest }) => rest);
+    if (payload.length === 0) return true;
 
-    const error = await upsert(basePayload);
+    const { error } = await client
+      .from("wallet_holdings")
+      .upsert(payload, { onConflict: "user_id,currency" })
+      .select("user_id,currency,amount,updated_at");
+
     if (error) {
-      if (error.code === "PGRST204") {
-        const fallbackError = await upsert(fallbackPayload);
-        if (fallbackError) {
-          console.warn("Failed to sync holdings (fallback)", fallbackError);
-          return false;
-        }
-        return true;
-      }
       console.warn("Failed to sync holdings", error);
       return false;
     }
@@ -87,9 +82,10 @@ const syncHoldingsToSupabase = async (holdings: HoldingRecord[]) => {
 
 export interface UseHoldingsOptions {
   rates?: RatesSnapshot | null;
+  userId?: string | null;
 }
 
-export const useHoldings = ({ rates }: UseHoldingsOptions) => {
+export const useHoldings = ({ rates, userId }: UseHoldingsOptions) => {
   const [holdings, setHoldings] = useState<HoldingRecord[]>([]);
   const [lastRemoved, setLastRemoved] = useState<HoldingRecord | null>(null);
   const initialised = useRef(false);
@@ -104,8 +100,8 @@ export const useHoldings = ({ rates }: UseHoldingsOptions) => {
   useEffect(() => {
     if (!initialised.current) return;
     persistHoldings(holdings);
-    void syncHoldingsToSupabase(holdings);
-  }, [holdings]);
+    void syncHoldingsToSupabase(holdings, userId);
+  }, [holdings, userId]);
 
   const addHolding = useCallback(
     (input: { title: string; amount: number; currency: CurrencyCode }) => {
@@ -157,8 +153,8 @@ export const useHoldings = ({ rates }: UseHoldingsOptions) => {
   }, [holdings]);
 
   const syncToSupabase = useCallback(() => {
-    return syncHoldingsToSupabase(holdings);
-  }, [holdings]);
+    return syncHoldingsToSupabase(holdings, userId);
+  }, [holdings, userId]);
 
   const totals = useMemo(() => {
     const summary = holdings.reduce(
