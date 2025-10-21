@@ -54,8 +54,8 @@ export const ExpensesTable = ({ expenses, onRemove, onUndo, lastRemoved }: Expen
                   <td className="px-6 py-3">{formatJalali(expense.spentAt, "YYYY/MM/DD")}</td>
                   <td className="px-6 py-3">
                     {expense.amount.toLocaleString("fa-IR", {
-                      minimumFractionDigits: expense.currency === "irt" ? 1 : 0,
-                      maximumFractionDigits: expense.currency === "irt" ? 1 : 2
+                      minimumFractionDigits: expense.currency === "IRT" ? 1 : 0,
+                      maximumFractionDigits: expense.currency === "IRT" ? 1 : 2
                     })}{" "}
                     {expense.currency.toUpperCase()}
                   </td>

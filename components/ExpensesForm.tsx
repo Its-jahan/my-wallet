@@ -12,22 +12,23 @@ interface ExpensesFormProps {
 }
 
 const currencyOptions: { value: CurrencyCode; label: string }[] = [
-  { value: "usd", label: "دلار" },
-  { value: "eur", label: "یورو" },
-  { value: "usdt", label: "تتر" },
-  { value: "irt", label: "تومان" }
+  { value: "USD", label: "دلار" },
+  { value: "EUR", label: "یورو" },
+  { value: "USDT", label: "تتر" },
+  { value: "IRT", label: "تومان" }
 ];
 
 const rateKey: Record<Exclude<CurrencyCode, "irt">, keyof RatesSnapshot> = {
-  usd: "usdIRT",
-  eur: "eurIRT",
-  usdt: "usdtIRT"
+  USD: "usdIRT",
+  EUR: "eurIRT",
+  USDT: "usdtIRT",
+  IRT: "usdIRT"
 };
 
 export const ExpensesForm = ({ rates, onSubmit, onImport, onExport }: ExpensesFormProps) => {
   const [description, setDescription] = useState("هزینه روزانه");
   const [amount, setAmount] = useState("0");
-  const [currency, setCurrency] = useState<CurrencyCode>("irt");
+  const [currency, setCurrency] = useState<CurrencyCode>("IRT");
   const [spentAt, setSpentAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -107,7 +108,7 @@ export const ExpensesForm = ({ rates, onSubmit, onImport, onExport }: ExpensesFo
       <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
         <span>معادل تومانی:</span>
         <div className="text-lg font-bold text-slate-900">{formatIRT(irtValue)} تومان</div>
-        {currency !== "irt" && rates && (
+        {currency !== "IRT" && rates && (
           <span className="text-xs text-slate-500">
             هر {currencyOptions.find((c) => c.value === currency)?.label} ≈ {formatIRT(rates[rateKey[currency as Exclude<CurrencyCode, "irt">]])} تومان
           </span>

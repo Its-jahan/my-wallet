@@ -12,22 +12,23 @@ interface HoldingsFormProps {
 }
 
 const currencyOptions: { value: CurrencyCode; label: string }[] = [
-  { value: "usd", label: "دلار آمریکا" },
-  { value: "eur", label: "یورو" },
-  { value: "usdt", label: "تتر" },
-  { value: "irt", label: "تومان" }
+  { value: "USD", label: "دلار آمریکا" },
+  { value: "EUR", label: "یورو" },
+  { value: "USDT", label: "تتر" },
+  { value: "IRT", label: "تومان" }
 ];
 
 const rateKey: Record<Exclude<CurrencyCode, "irt">, keyof RatesSnapshot> = {
-  usd: "usdIRT",
-  eur: "eurIRT",
-  usdt: "usdtIRT"
+  USD: "usdIRT",
+  EUR: "eurIRT",
+  USDT: "usdtIRT",
+  IRT: "usdIRT"
 };
 
 export const HoldingsForm = ({ rates, onSubmit, onImport, onExport }: HoldingsFormProps) => {
   const [title, setTitle] = useState("حساب اصلی");
   const [amount, setAmount] = useState("0");
-  const [currency, setCurrency] = useState<CurrencyCode>("usd");
+  const [currency, setCurrency] = useState<CurrencyCode>("USD");
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -107,7 +108,7 @@ export const HoldingsForm = ({ rates, onSubmit, onImport, onExport }: HoldingsFo
         <div className="flex flex-col justify-end rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
           <span>ارزش معادل:</span>
           <span className="text-lg font-bold text-slate-900">{formatIRT(irtValue)} تومان</span>
-          {currency !== "irt" && rates && (
+          {currency !== "IRT" && rates && (
             <span className="text-xs text-slate-500">
               هر {currencyOptions.find((c) => c.value === currency)?.label} ≈ {formatIRT(rates[rateKey[currency as Exclude<CurrencyCode, "irt">]])} تومان
             </span>
