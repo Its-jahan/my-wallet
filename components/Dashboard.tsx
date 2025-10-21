@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { HoldingsForm } from "./HoldingsForm";
 import { ExpensesForm } from "./ExpensesForm";
 import { ExpensesTable } from "./ExpensesTable";
@@ -9,11 +10,14 @@ import { UpdateBanner } from "./UpdateBanner";
 import { useRates } from "@/hooks/useRates";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useSupabaseSession } from "@/hooks/useSupabaseSession";
 import type { RatesSnapshot } from "@/lib/conversion";
 import { formatIRT } from "@/lib/format";
 import { formatJalali } from "@/lib/dayjs";
 
 export const Dashboard = () => {
+  const router = useRouter();
+  const { user, loading: sessionLoading } = useSupabaseSession();
   const { rates, isLoading, error, mutate, showStale, clearStale } = useRates();
 
   const ratesSnapshot: RatesSnapshot | null = useMemo(() => {
@@ -31,6 +35,20 @@ export const Dashboard = () => {
   const holdingsTotal = holdings.totals.irt;
   const expensesTotal = expenses.totals.irt;
   const [syncStatus, setSyncStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  useEffect(() => {
+    if (!sessionLoading && !user) {
+      router.replace("/login");
+    }
+  }, [router, sessionLoading, user]);
+
+  if (sessionLoading || !user) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/80 text-sm text-slate-500">
+        {sessionLoading ? "در حال بررسی حساب کاربری..." : "برای مشاهده داشبورد ابتدا وارد شوید."}
+      </div>
+    );
+  }
 
   const handleManualSync = async () => {
     if (syncStatus === "loading") return;

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase-client";
+import { useSupabaseSession } from "@/hooks/useSupabaseSession";
 
 type AuthStatus = "idle" | "loading" | "success" | "error";
 
@@ -11,27 +12,26 @@ const initialError = "";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { user, loading: sessionLoading } = useSupabaseSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [error, setError] = useState(initialError);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
-    const client = getSupabaseClient();
-    if (!client) return;
-    void client.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        router.replace("/");
-      }
-    });
-  }, [router]);
+    if (!sessionLoading && user) {
+      router.replace("/");
+    }
+  }, [router, sessionLoading, user]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (status === "loading") return;
     if (password !== confirmPassword) {
       setError("رمز عبور و تکرار آن یکسان نیستند.");
+      setFeedback("");
       return;
     }
 
@@ -39,19 +39,43 @@ export default function SignupPage() {
     if (!client) {
       setStatus("error");
       setError("پیکربندی Supabase یافت نشد. لطفا مقادیر ENV را بررسی کنید.");
+      setFeedback("");
       return;
     }
 
     setStatus("loading");
     setError(initialError);
-    const { error: signupError } = await client.auth.signUp({ email, password });
+    setFeedback("");
+    const { data, error: signupError } = await client.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined
+      }
+    });
     if (signupError) {
       setStatus("error");
       setError(signupError.message);
       return;
     }
 
+    if (data.session) {
+      setStatus("success");
+      setFeedback("ثبت‌نام انجام شد و شما مستقیما وارد شدید.");
+      router.replace("/");
+      return;
+    }
+
+    const { error: signInError } = await client.auth.signInWithPassword({ email, password });
+    if (!signInError) {
+      setStatus("success");
+      setFeedback("ثبت‌نام انجام شد و شما مستقیما وارد شدید.");
+      router.replace("/");
+      return;
+    }
+
     setStatus("success");
+    setFeedback("ثبت‌نام انجام شد. در صورت فعال بودن تایید ایمیل، لطفا لینک ارسال‌شده را تایید کنید.");
   };
 
   return (
@@ -96,20 +120,8 @@ export default function SignupPage() {
           />
         </div>
         {error && <p className="text-sm text-rose-500">{error}</p>}
-        {status === "success" && (
-          <p className="text-sm text-emerald-600">
-            ثبت‌نام انجام شد. برای ادامه ایمیل خود را بررسی کنید یا از{" "}
-            <button
-              type="button"
-              className="text-primary underline"
-              onClick={() => router.replace("/login")}
-            >
-              اینجا
-            </button>{" "}
-            وارد شوید.
-          </p>
-        )}
-        <button type="submit" className="btn-primary w-full text-center" disabled={status === "loading"}>
+        {feedback && <p className="text-sm text-emerald-600">{feedback}</p>}
+        <button type="submit" className="btn-primary w-full text-center" disabled={status === "loading" || sessionLoading}>
           {status === "loading" ? "در حال ساخت حساب..." : "ساخت حساب"}
         </button>
       </form>

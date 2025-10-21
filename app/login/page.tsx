@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase-client";
+import { useSupabaseSession } from "@/hooks/useSupabaseSession";
 
 type AuthStatus = "idle" | "loading" | "success" | "error";
 
@@ -11,20 +12,17 @@ const initialError = "";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loading: sessionLoading } = useSupabaseSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [error, setError] = useState(initialError);
 
   useEffect(() => {
-    const client = getSupabaseClient();
-    if (!client) return;
-    void client.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        router.replace("/");
-      }
-    });
-  }, [router]);
+    if (!sessionLoading && user) {
+      router.replace("/");
+    }
+  }, [router, sessionLoading, user]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -80,7 +78,7 @@ export default function LoginPage() {
         </div>
         {error && <p className="text-sm text-rose-500">{error}</p>}
         {status === "success" && <p className="text-sm text-emerald-600">ورود موفقیت‌آمیز بود. در حال انتقال...</p>}
-        <button type="submit" className="btn-primary w-full text-center" disabled={status === "loading"}>
+        <button type="submit" className="btn-primary w-full text-center" disabled={status === "loading" || sessionLoading}>
           {status === "loading" ? "در حال ورود..." : "ورود"}
         </button>
       </form>
@@ -89,7 +87,7 @@ export default function LoginPage() {
           حساب کاربری ندارید؟ ثبت‌نام کنید
         </Link>
         <Link href="/" className="hover:underline">
-          بازگشت به صفحه اصلی
+          بازگشت به داشبورد
         </Link>
       </div>
     </div>

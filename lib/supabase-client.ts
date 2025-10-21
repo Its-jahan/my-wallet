@@ -10,7 +10,7 @@ export const getSupabaseClient = () => {
   if (!url || !anonKey) return null;
   client = createClient(url, anonKey, {
     auth: {
-      persistSession: false
+      persistSession: true
     }
   });
   return client;

@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import "./globals.css";
 import type { ReactNode } from "react";
+import { NavUserControls } from "@/components/NavUserControls";
+import { PwaInitializer } from "@/components/PwaInitializer";
 
 export const metadata: Metadata = {
   title: "کیف پول من",
-  description: "مدیریت دارایی‌ها و هزینه‌ها با نرخ‌های زنده بازار"
+  description: "مدیریت دارایی‌ها و هزینه‌ها با نرخ‌های زنده بازار",
+  themeColor: "#0f172a",
+  applicationName: "کیف پول من",
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-192.png"
+  },
+  appleWebApp: {
+    capable: true,
+    title: "کیف پول من",
+    statusBarStyle: "default"
+  }
 };
 
 export default function RootLayout({
@@ -29,15 +41,7 @@ export default function RootLayout({
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 md:text-sm">
                 <span className="rounded-full bg-primary/10 px-4 py-2 font-medium text-primary">نرخ‌ها هر روز به‌روزرسانی می‌شوند</span>
-                <Link
-                  href="/login"
-                  className="rounded-xl border border-slate-200 px-4 py-2 font-medium text-slate-600 transition hover:bg-slate-50"
-                >
-                  ورود
-                </Link>
-                <Link href="/signup" className="btn-primary border border-primary px-4 py-2 text-sm font-semibold text-white">
-                  ثبت‌نام
-                </Link>
+                <NavUserControls />
                 <span className="hidden rounded-full bg-emerald-50 px-4 py-2 font-medium text-emerald-600 md:inline-flex">
                   مناسب برای استفاده روی موبایل و دسکتاپ
                 </span>
@@ -53,6 +57,7 @@ export default function RootLayout({
             <p>ساخته شده برای پایش دارایی‌های ارزی با پشتیبانی از حالت آفلاین و همگام‌سازی ابری.</p>
           </footer>
         </div>
+        <PwaInitializer />
       </body>
     </html>
   );
